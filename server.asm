@@ -9,7 +9,6 @@ SYS_accept equ 43
 SYS_bind equ 49
 SYS_listen equ 50
 SYS_exit equ 60
-;;SYS_creat equ 85
 
 SEEK_SET equ 0
 SEEK_END equ 2
@@ -111,9 +110,6 @@ macro read fd, buf, size
     syscall3 SYS_read, fd, buf, size
 }
 
-;;read_html_file:
-;;    jl main:
-
 segment readable executable
 entry main
 main:
@@ -126,50 +122,31 @@ main:
     open main_html
     cmp rax, 0
     jl error
-    ;;mov qword [htmlfd], rax
-    mov rbx, rax
+    mov qword [htmlfd], rax
 
     ;; Find the len of the html page
-    ;;lseek htmlfd, 0, SEEK_END
-    lseek rbx, 0, SEEK_END
+    lseek [htmlfd], 0, SEEK_END
     cmp rax, 0
     jl error
     
-    mov rcx, rax    ;; Save the file size to rcx
-
-    lseek rbx, 0, SEEK_SET
+    lseek [htmlfd], 0, SEEK_SET
     cmp rax, 0
     jl error
-
-
-    ;; DEBUG: check rcx value
-    cmp rcx, 0
-    je error
 
     ;; Set up stack
     push rbp
     mov rbp, rsp
 
-    sub rsp, debug_file_size
-    ;;sub rbp, rax
-    ;;sub rsp, 319
+    sub rsp, rcx
+    
+    read [htmlfd], rsp, rcx
 
-    ;read htmlfd, rsp, 319
-    ;read rbx, rsp, debug_file_size
-    read rbx, rsp, rcx
     cmp rax, -9 ;; Bad file descriptor
     je debug_error
     cmp rax, 0
     jl error
 
     write STDOUT, rsp, debug_file_size
-
-    ;;read htmlfd, rbp, rax
-    ;;write STDOUT, rbp, 100
-
-    ;write STDOUT, depug_msg, depug_msg_len
-    ;;write STDOUT, rbp, rax
-
 
     ;; BREAK POINT
     mov eax, 1
