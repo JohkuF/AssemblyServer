@@ -129,6 +129,8 @@ main:
     cmp rax, 0
     jl error
     
+    mov [html_file_len], rax
+
     lseek [htmlfd], 0, SEEK_SET
     cmp rax, 0
     jl error
@@ -137,16 +139,16 @@ main:
     push rbp
     mov rbp, rsp
 
-    sub rsp, rcx
+    sub rsp, [html_file_len]
     
-    read [htmlfd], rsp, rcx
+    read [htmlfd], rsp, [html_file_len]
 
     cmp rax, -9 ;; Bad file descriptor
     je debug_error
     cmp rax, 0
     jl error
 
-    write STDOUT, rsp, debug_file_size
+    write STDOUT, rsp, [html_file_len]
 
     ;; BREAK POINT
     mov eax, 1
@@ -248,11 +250,14 @@ struc servaddr_in
 htmlfd dq -1
 sockfd dq -1
 connfd dq -1
+
 servaddr servaddr_in
 sizeof_servaddr = $ - servaddr.sin_family
 
 cliaddr servaddr_in
 cliaddr_len dd sizeof_servaddr
+
+html_file_len dq -1
 
 response db "HTTP/1.1 200 OK", 13, 10
          db "Content-Type: text/html; charset=utf-8", 13, 10
